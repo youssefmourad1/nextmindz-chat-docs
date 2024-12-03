@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt and install dependencies
-COPY requirements.txt /app/
+# Copy requirements.txt and install dependencies this will install
+COPY requirements.txt /app/ 
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Streamlit app code
