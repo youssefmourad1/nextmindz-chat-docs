@@ -7,3 +7,4 @@ requests
 groq
 pillow
 faiss-cpu
+langchain-groq
