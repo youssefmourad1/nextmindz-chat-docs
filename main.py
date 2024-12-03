@@ -16,10 +16,10 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Initialize embeddings
 hf_embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 # Initialize ChatGroq LLM
 llm = ChatGroq(
-    api_key = "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",
+    api_key = GROQ_API_KEY,
     model="llama-3.1-70b-versatile",
     temperature=0.7,
     max_tokens=1024,
@@ -37,7 +37,7 @@ def process_with_llama_vision(image_data):
     #     model="llama-3.2-11b-vision-preview",
     #     image=f"data:image/jpeg;base64,{encoded_image}"
     # )
-    client = Groq(api_key = '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')
+    client = Groq(api_key = GROQ_API_KEY)
     response = client.chat.completions.create(
     messages=[
         {
