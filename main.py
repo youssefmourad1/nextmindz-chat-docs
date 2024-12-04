@@ -54,7 +54,7 @@ def process_with_llama_vision(image_data):
             ],
         }
     ],
-    model="llama-3.2-90b-vision-preview",
+    model="llama-3.2-11b-vision-preview",
 )
     return response.choices[0].message.content
 
