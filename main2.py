@@ -4,17 +4,12 @@ import streamlit as st
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 import fitz  # PyMuPDF
 import base64
 from langchain.schema import Document
-from groq import Groq  # Commented out as we are no longer using Groq's Llama Vision
-import easyocr
-from PIL import Image
-import numpy as np
-import pytesseract
-from io import BytesIO
+from groq import Groq
 
 # Set embedding model
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -27,7 +22,7 @@ llm = ChatGroq(
     api_key = GROQ_API_KEY,
     model="llama-3.1-70b-versatile",
     temperature=0.7,
-    max_tokens=8000,
+    max_tokens=32768,
     max_retries=2,
 )
 
@@ -35,25 +30,46 @@ llm = ChatGroq(
 def encode_image(image_data):
     return base64.b64encode(image_data).decode('utf-8')
 
-# Function to process document images using OCR
-def process_with_ocr(image_data):
-    reader = easyocr.Reader(['fr'], gpu=False)
-    image = Image.open(BytesIO(image_data))
-    image_np = np.array(image)
-    result = reader.readtext(image_np, detail=0, paragraph=True)
-    text = '\n'.join(result)
-    return text
+# Function to process document images using Groq's Llama Vision
+def process_with_llama_vision(image_data):
+    encoded_image = encode_image(image_data)
+    # response = client.vision.process.create(
+    #     model="llama-3.2-11b-vision-preview",
+    #     image=f"data:image/jpeg;base64,{encoded_image}"
+    # )
+    client = Groq(api_key = GROQ_API_KEY)
+    response = client.chat.completions.create(
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", 
+                 "text": """
+                 Transcrivez le texte de l'image fournie, en veillant à ce que votre transcription corresponde exactement au texte original, y compris la mise en forme. L'image contient un contrat scanné destiné à un usage personnel. Si des tableaux sont présents, représentez-les de manière claire et structurée, avec une indentation correcte et des bordures représentées par `|`. Assurez-vous d'extraire tout le contenu des tableaux, y compris les en-têtes, les lignes et les colonnes, de manière ordonnée. Si l'image contient des diagrammes, décrivez leur contenu textuel de manière détaillée. Capturez avec précision l'intégralité du texte, y compris les notes de bas de page, les titres, et tout autre détail visible, tout en conservant la présentation et l\'organisation d\'origine."""},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{encoded_image}",
+                    },
+                },
+            ],
+        }
+    ],
+    model="llama-3.2-11b-vision-preview",
+)
+    return response.choices[0].message.content
 
-# Function to extract text from PDF using OCR
+
+# Function to extract text from PDF using Llama Vision
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""
     for page_num in range(doc.page_count):
         page = doc.load_page(page_num)
         pix = page.get_pixmap()
-        img_bytes = pix.tobytes("png")  # Ensure the image is in PNG format
+        img_bytes = pix.tobytes()
         try:
-            page_text = process_with_ocr(img_bytes)
+            page_text = process_with_llama_vision(img_bytes)
             text += page_text + "\n"
         except Exception as e:
             st.error(f"Error processing page {page_num + 1}: {e}")
@@ -108,7 +124,7 @@ def main():
     )
     if uploaded_files:
         if st.button("Traiter les documents"):
-            with st.spinner("Traitement des documents avec OCR et extraction des textes..."):
+            with st.spinner("Traitement des documents avec Llama Vision et extraction des textes..."):
                 extracted_texts = process_files(uploaded_files)
                 st.text(extracted_texts)
                 if extracted_texts:
@@ -124,10 +140,10 @@ def main():
             with st.spinner("Génération de la réponse..."):
                 try:
                     prompt = f"""
-                            Vous êtes un agent d'assurance AI, votre role est d'aider les collaborateurs à analyser les données des contrats et des avenants des contrats (différents avenants).
+                            Vous êtes un agent d'assurance AI, votre role est d'aider les collaborateur à analyser les données des contrats et des avenants des contracts (différents avenant).
                             Toutes les informations doivent être en ordre chronologique croissant, listant toutes les prestations, dans le contrat ou les avenants.
 
-                Message ou demande de l'utilisateur : {question}
+                message ou demande de l'utilisateur : {question}
 
 Vous êtes en charge d'extraire des informations précises, comme : 
 Capitaux assurés 

@@ -8,3 +8,5 @@ groq
 pillow
 faiss-cpu
 langchain-groq
+pytesseract
+easyocr
