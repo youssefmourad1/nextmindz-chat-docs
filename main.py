@@ -22,7 +22,7 @@ llm = ChatGroq(
     api_key = GROQ_API_KEY,
     model="llama-3.1-70b-versatile",
     temperature=0.7,
-    max_tokens=1024,
+    max_tokens=32768,
     max_retries=2,
 )
 
@@ -125,6 +125,7 @@ def main():
         if st.button("Traiter les documents"):
             with st.spinner("Traitement des documents avec Llama Vision et extraction des textes..."):
                 extracted_texts = process_files(uploaded_files)
+                st.text(extracted_texts)
                 if extracted_texts:
                     chain = create_conversational_chain(extracted_texts)
                     st.session_state.chain = chain
