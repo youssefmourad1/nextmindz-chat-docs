@@ -44,7 +44,8 @@ def process_with_llama_vision(image_data):
             "role": "user",
             "content": [
                 {"type": "text", 
-                 "text": "Transcribe the text in this image, your transcription should be the exact same text that exists in the image, if some table is there, generate the text very well indented and represent the borders with |. generate all the text you can find in the image"},
+                 "text": """
+                 Transcrivez le texte de l'image fournie, en veillant à ce que votre transcription corresponde exactement au texte original, y compris la mise en forme. L'image contient un contrat scanné destiné à un usage personnel. Si des tableaux sont présents, représentez-les de manière claire et structurée, avec une indentation correcte et des bordures représentées par `|`. Assurez-vous d'extraire tout le contenu des tableaux, y compris les en-têtes, les lignes et les colonnes, de manière ordonnée. Si l'image contient des diagrammes, décrivez leur contenu textuel de manière détaillée. Capturez avec précision l'intégralité du texte, y compris les notes de bas de page, les titres, et tout autre détail visible, tout en conservant la présentation et l\'organisation d\'origine."""},
                 {
                     "type": "image_url",
                     "image_url": {
