@@ -43,7 +43,8 @@ def process_with_llama_vision(image_data):
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Transcribe the text in this image, your transcription shouldl also contains general infos about the position diagrams explanations if they exist"},
+                {"type": "text", 
+                 "text": "Transcribe the text in this image, your transcription should be the exact same text that exists in the image, if some table is there, generate the text very well indented and represent the borders with |. generate all the text you can find in the image"},
                 {
                     "type": "image_url",
                     "image_url": {
@@ -100,7 +101,7 @@ def create_conversational_chain(extracted_texts):
     # Convert extracted texts to Document objects
     documents = [Document(page_content=text) for text in extracted_texts]
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=4500, chunk_overlap=700)
     split_docs = splitter.split_documents(documents)
     vectorstore = FAISS.from_texts([doc.page_content for doc in split_docs], hf_embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
@@ -136,8 +137,25 @@ def main():
         if question:
             with st.spinner("Génération de la réponse..."):
                 try:
+                    prompt = f"""
+                            Vous êtes un agent d'assurance AI, votre role est d'aider les collaborateur à analyser les données des contrats et des avenants des contracts (différents avenant).
+                            Toutes les informations doivent être en ordre chronologique croissant, listant toutes les prestations, dans le contrat ou les avenants.
+
+                message ou demande de l'utilisateur : {question}
+
+Vous êtes en charge d'extraire des informations précises, comme : 
+Capitaux assurés 
+Montants des franchises 
+Garanties proposées 
+Risques assurés et capitaux respectifs 
+Sites assurés 
+Limite de l'indemnité 
+Plafonds pour les contrats maladie 
+Taux de prime 
+etc ...
+                            """
                     result = st.session_state.chain(
-                        {"question": question, "chat_history": st.session_state.chat_history}
+                        {"question": prompt, "chat_history": st.session_state.chat_history}
                     )
                     st.session_state.chat_history.append((question, result['answer']))
                     st.write("**Réponse :**", result['answer'])
